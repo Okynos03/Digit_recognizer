@@ -28,17 +28,6 @@ __pycache__/
 # Archivos creados por Jupyter o Kaggle
 .ipynb_checkpoints/
 
-# ===========================
-# MODELO / DATA
-# ===========================
-
-# Pesos del modelo (opcional)
-# Si NO quieres subir tus pesos entrenados, deja descomentado:
-model/*.npz
-model/*.h5
-model/*.pt
-model/*.pkl
-
 # Si quieres subir los pesos a GitHub, borra la línea de arriba
 
 # Dataset grande
