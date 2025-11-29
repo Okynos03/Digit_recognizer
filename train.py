@@ -1,32 +1,41 @@
 import numpy as np
 import pandas as pd
 
-data = pd.read_csv("data/train.csv")
-data = np.array(data)
-m, n = data.shape
+# Cargar y preparar datos MNIST
+
+data = pd.read_csv("data/train.csv").to_numpy()
 np.random.shuffle(data)
 
-data_dev = data[0:1000].T
-Y_dev = data_dev[0]
-X_dev = data_dev[1:n] / 255.
+X = data[:, 1:].T / 255.0   
+Y = data[:, 0]     
+m = X.shape[1]
 
-data_train = data[1000:m].T
-Y_train = data_train[0]
-X_train = data_train[1:n] / 255.
-_, m_train = X_train.shape
+def one_hot(Y):
+    one_hot_Y = np.zeros((10, Y.size))
+    one_hot_Y[Y, np.arange(Y.size)] = 1
+    return one_hot_Y
+
+Y_onehot = one_hot(Y)
+
+# Red Neuronal
 
 def init_params():
-    W1 = np.random.rand(10, 784) - 0.5
-    b1 = np.random.rand(10, 1) - 0.5
-    W2 = np.random.rand(10, 10) - 0.5
-    b2 = np.random.rand(10, 1) - 0.5
+    W1 = np.random.randn(10, 784) * np.sqrt(2/784)
+    b1 = np.zeros((10, 1))
+    W2 = np.random.randn(10, 10) * np.sqrt(2/10)
+    b2 = np.zeros((10, 1))
     return W1, b1, W2, b2
 
 def ReLU(Z):
-    return np.maximum(Z, 0)
+    return np.maximum(0, Z)
+
+def ReLU_deriv(Z):
+    return Z > 0
 
 def softmax(Z):
-    return np.exp(Z) / np.sum(np.exp(Z), axis=0)
+    Z = Z - np.max(Z, axis=0, keepdims=True)
+    expZ = np.exp(Z)
+    return expZ / np.sum(expZ, axis=0, keepdims=True)
 
 def forward_prop(W1, b1, W2, b2, X):
     Z1 = W1.dot(X) + b1
@@ -35,43 +44,45 @@ def forward_prop(W1, b1, W2, b2, X):
     A2 = softmax(Z2)
     return Z1, A1, Z2, A2
 
-def ReLU_deriv(Z):
-    return Z > 0
+def backward_prop(Z1, A1, A2, W2, X, Y_onehot):
+    m = X.shape[1]
 
-def one_hot(Y):
-    one_hot_Y = np.zeros((10, Y.size))
-    one_hot_Y[Y, np.arange(Y.size)] = 1
-    return one_hot_Y
+    dZ2 = A2 - Y_onehot
+    dW2 = (1/m) * dZ2.dot(A1.T)
+    db2 = (1/m) * np.sum(dZ2, axis=1, keepdims=True)
 
-def backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y):
-    one_hot_Y = one_hot(Y)
-    dZ2 = A2 - one_hot_Y
-    dW2 = dZ2.dot(A1.T) / m_train
-    db2 = np.sum(dZ2, axis=1, keepdims=True) / m_train
     dZ1 = W2.T.dot(dZ2) * ReLU_deriv(Z1)
-    dW1 = dZ1.dot(X.T) / m_train
-    db1 = np.sum(dZ1, axis=1, keepdims=True) / m_train
+    dW1 = (1/m) * dZ1.dot(X.T)
+    db1 = (1/m) * np.sum(dZ1, axis=1, keepdims=True)
+
     return dW1, db1, dW2, db2
 
-def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha):
-    W1 -= alpha * dW1
-    b1 -= alpha * db1
-    W2 -= alpha * dW2
-    b2 -= alpha * db2
+def update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, lr):
+    W1 -= lr * dW1
+    b1 -= lr * db1
+    W2 -= lr * dW2
+    b2 -= lr * db2
     return W1, b1, W2, b2
 
-def gradient_descent(X, Y, alpha, iterations):
+#ENTRENAMIENTO
+
+def train(X, Y, Y_onehot, lr=0.1, it=1500):
     W1, b1, W2, b2 = init_params()
-    for i in range(iterations):
+    for i in range(it):
         Z1, A1, Z2, A2 = forward_prop(W1, b1, W2, b2, X)
-        dW1, db1, dW2, db2 = backward_prop(Z1, A1, Z2, A2, W1, W2, X, Y)
-        W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, alpha)
+        dW1, db1, dW2, db2 = backward_prop(Z1, A1, A2, W2, X, Y_onehot)
+
+        W1, b1, W2, b2 = update_params(W1, b1, W2, b2, dW1, db1, dW2, db2, lr)
+
+        if i % 100 == 0:
+            predictions = np.argmax(A2, axis=0)
+            acc = np.mean(predictions == Y)
+            print(f"Iter {i} - Accuracy: {acc:.4f}")
+
     return W1, b1, W2, b2
 
-#ENTRENAR
-W1, b1, W2, b2 = gradient_descent(X_train, Y_train, 0.1, 500)
 
-#GUARDAR EL MODELO
+W1, b1, W2, b2 = train(X, Y, Y_onehot)
+
 np.savez("model/weights.npz", W1=W1, b1=b1, W2=W2, b2=b2)
-
 print("Modelo entrenado y guardado en model/weights.npz")

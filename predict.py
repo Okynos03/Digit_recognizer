@@ -1,10 +1,12 @@
 import numpy as np
 
 def ReLU(Z):
-    return np.maximum(Z, 0)
+    return np.maximum(0, Z)
 
 def softmax(Z):
-    return np.exp(Z) / np.sum(np.exp(Z), axis=0)
+    Z = Z - np.max(Z, axis=0, keepdims=True)
+    expZ = np.exp(Z)
+    return expZ / np.sum(expZ, axis=0, keepdims=True)
 
 def forward_prop(W1, b1, W2, b2, X):
     Z1 = W1.dot(X) + b1
@@ -19,8 +21,8 @@ def load_model():
 
 def predict_digit(img_vector):
     W1, b1, W2, b2 = load_model()
-    X = img_vector.reshape(784, 1)
-    X = X / 255.
+
+    X = img_vector.reshape(784, 1) / 255.0
     A2 = forward_prop(W1, b1, W2, b2, X)
-    prediction = np.argmax(A2, axis=0)[0]
-    return int(prediction)
+
+    return int(np.argmax(A2, axis=0)[0])
