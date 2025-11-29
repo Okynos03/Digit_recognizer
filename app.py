@@ -19,5 +19,12 @@ class DigitInput(BaseModel):
 @app.post("/predict")
 def predict(input: DigitInput):
     arr = np.array(input.pixels, dtype=np.float32)
+
+    print("=== BACKEND PIXELS ===")
+    print("max:", np.max(arr))
+    print("min:", np.min(arr))
+    print("sum:", np.sum(arr))
+    print("=======================")
+
     pred = predict_digit(arr)
     return {"prediction": pred}
