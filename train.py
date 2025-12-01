@@ -20,9 +20,10 @@ Y_onehot = one_hot(Y)
 # Red Neuronal
 
 def init_params():
-    W1 = np.random.randn(10, 784) * np.sqrt(2/784)
-    b1 = np.zeros((10, 1))
-    W2 = np.random.randn(10, 10) * np.sqrt(2/10)
+    neurons_hidden = 128
+    W1 = np.random.randn(neurons_hidden, 784) * np.sqrt(2/784)
+    b1 = np.zeros((neurons_hidden, 1))
+    W2 = np.random.randn(10, neurons_hidden) * np.sqrt(2/neurons_hidden)
     b2 = np.zeros((10, 1))
     return W1, b1, W2, b2
 

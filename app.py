@@ -19,12 +19,14 @@ class DigitInput(BaseModel):
 @app.post("/predict")
 def predict(input: DigitInput):
     arr = np.array(input.pixels, dtype=np.float32)
+    
+    matrix = arr.reshape(28, 28)
 
-    print("=== BACKEND PIXELS ===")
-    print("max:", np.max(arr))
-    print("min:", np.min(arr))
-    print("sum:", np.sum(arr))
-    print("=======================")
+    print("=== MATRIZ 28x28 ===")
+    for row in matrix:
+        row_str = " ".join(f"{int(val):3}" for val in row)
+        print(row_str)
+    print("====================")
 
     pred = predict_digit(arr)
     return {"prediction": pred}

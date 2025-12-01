@@ -2,6 +2,8 @@
 # PYTHON / FASTAPI BACKEND
 # ===========================
 
+data/
+
 # Entornos virtuales
 venv/
 env/
